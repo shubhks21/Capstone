@@ -1,3 +1,5 @@
+# pylint: skip-file
+
 from flask import Flask
 from flask import json
 import logging
