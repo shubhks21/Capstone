@@ -1,0 +1,67 @@
+version: 2.1
+
+orbs:
+  aws-eks: circleci/aws-eks@2.2.0
+  kubernetes: circleci/kubernetes@1.3.1
+  aws-cli: circleci/aws-cli@4.1.1
+
+
+jobs:
+  build-app:
+    docker:
+      - image: python:3.8
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements.txt
+      - run:
+          name: Linting
+          command: pylint app.py
+
+
+  build-and-push-docker-image:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.7
+      - run:
+          name: Build Docker image
+          command: |
+            sh ./run_docker.sh
+      - run:
+          name: Push Docker image to Docker Hub
+          command: |
+            sh ./upload_docker.sh
+
+  deploy-over-kubernetes:
+    docker:
+      - image: circleci/python:3.8
+    steps:
+      - checkout
+      - aws-eks/setup:
+          cluster-name: your-eks-cluster-name
+          aws-region: your-aws-region
+      - aws-ecr/check-registry:
+          registry-url: your-ecr-registry-url
+      - aws-ecr/create-repository:
+          repository-name: python-helloworld
+      - aws-ecr/docker-login
+      - run:
+          name: Deploy to EKS
+          command: |
+            aws eks update-kubeconfig --name your-eks-cluster-name --region your-aws-region
+            kubectl apply -f kubernetes/deployment.yml
+            kubectl apply -f kubernetes/service.yml
+
+
+workflows:
+  default:
+    jobs:
+      - build-app
+      - build-and-push-docker-image:
+          requires: [build-app]
+      #- deploy-over-kubernetes:
+      #    requires: [build-and-push-docker-image]
