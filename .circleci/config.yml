@@ -152,7 +152,7 @@ workflows:
       - build-app
       - build-and-push-docker-image:
           requires: [build-app]
-      #- create-cluster:
-      #    requires: [build-and-push-docker-image]
-      - deploy-over-kubernetes
-      #    requires: [create-cluster]
+      - create-cluster:
+          requires: [build-and-push-docker-image]
+      - deploy-over-kubernetes:
+          requires: [create-cluster]
