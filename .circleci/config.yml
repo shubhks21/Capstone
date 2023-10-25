@@ -17,7 +17,7 @@ commands:
           when: on_fail
           command: |
             # Your code here
-            aws cloudformation delete-stack --stack-name eksctl-capstone-project-cluster
+            # aws cloudformation delete-stack --stack-name eksctl-capstone-project-cluster
             eksctl delete cluster --region=us-east-1 --name=capstone-project
 
 
