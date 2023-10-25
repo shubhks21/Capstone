@@ -106,9 +106,9 @@ jobs:
       - image: circleci/python:3.8
     steps:
       - checkout
-      - aws-eks/setup:
-          cluster-name: capstone-project
-          aws-region: us-east-1
+#      - aws-eks/setup:
+#          cluster-name: capstone-project
+#          aws-region: us-east-1
 #      - aws-ecr/check-registry:
 #          registry-url: your-ecr-registry-url
 #      - aws-ecr/create-repository:
