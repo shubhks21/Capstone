@@ -6,14 +6,14 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-      app: my-app
+      app: capstone
   template:
     metadata:
       labels:
-        app: my-app
+        app: capstone
     spec:
       containers:
-        - name: my-container
-          image: my-image:tag
+        - name: capstone
+          image: shubhks21/capstone:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 80

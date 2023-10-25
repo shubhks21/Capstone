@@ -6,6 +6,21 @@ orbs:
   aws-cli: circleci/aws-cli@4.1.1
 
 
+commands:
+  destroy-environment:
+    description: Delete cluster
+    parameters:
+      # Add parameter here   
+    steps:
+      - run:
+          name: Delete Cluster
+          when: on_fail
+          command: |
+            # Your code here
+            aws cloudformation delete-stack --stack-name eksctl-capstone-project-cluster
+            eksctl delete cluster --region=us-east-1 --name=capstone-project
+
+
 jobs:
   build-app:
     docker:
@@ -35,25 +50,79 @@ jobs:
           command: |
             sh ./upload_docker.sh
 
+
+  create-cluster:
+      docker:
+        - image: python:3.7-alpine3.11
+      steps:
+        - checkout
+        - run:
+            name: Install tar and gzip
+            command: |
+              apk add --update tar gzip nodejs npm curl  
+        - run:
+            name: install_awscli
+            command: |
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              ./aws/install 
+        - run:
+            name: install_aws_eks
+            command: |
+              mkdir -p src
+              curl --silent --location --retry 5 "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C src
+              chmod +x src/eksctl
+              SUDO=""
+              if [ $(id -u) -ne 0 ] && which sudo > /dev/null ; then
+                  SUDO="sudo"
+              fi
+                  $SUDO mv src/eksctl /usr/local/bin/
+                  rmdir src
+        - run:
+            name: install_kubectl
+            command: |
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+              kubectl version --client
+        - run:
+            name: AWS EKS cluster creation
+            command: |
+              eksctl create cluster --name capstone-project --region us-east-1 --zones us-east-1a,us-east-1b,us-east-1c,us-east-1d 
+        - run:
+            name: Introduced Delay
+            command: |
+              sleep 60
+        - run:
+            name: AWS EKS get cluster creation
+            command: |
+              eksctl utils describe-stacks --region us-east-1 --cluster capstone-project
+              eksctl get cluster --name capstone-project --region us-east-1
+        - destroy-environment
+
+
+
   deploy-over-kubernetes:
     docker:
       - image: circleci/python:3.8
     steps:
       - checkout
       - aws-eks/setup:
-          cluster-name: your-eks-cluster-name
-          aws-region: your-aws-region
-      - aws-ecr/check-registry:
-          registry-url: your-ecr-registry-url
-      - aws-ecr/create-repository:
-          repository-name: python-helloworld
-      - aws-ecr/docker-login
+          cluster-name: capstone-project
+          aws-region: us-east-1
+#      - aws-ecr/check-registry:
+#          registry-url: your-ecr-registry-url
+#      - aws-ecr/create-repository:
+#          repository-name: python-helloworld
+#      - aws-ecr/docker-login
       - run:
           name: Deploy to EKS
           command: |
-            aws eks update-kubeconfig --name your-eks-cluster-name --region your-aws-region
-            kubectl apply -f kubernetes/deployment.yml
-            kubectl apply -f kubernetes/service.yml
+            aws eks update-kubeconfig --name capstone-project --region us-east-1
+            kubectl apply -f deployment.yml
+            kubectl apply -f service.yml
+            sleep 30
+            kubectl get deploy,rs,svc,pods,nodes,services
+      - destroy-environment
 
 
 workflows:
@@ -62,5 +131,7 @@ workflows:
       - build-app
       - build-and-push-docker-image:
           requires: [build-app]
-      #- deploy-over-kubernetes:
-      #    requires: [build-and-push-docker-image]
+      - create-cluster:
+          requires: [build-and-push-docker-image]
+      - deploy-over-kubernetes:
+          requires: [create-cluster]
