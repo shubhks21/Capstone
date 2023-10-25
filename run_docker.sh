@@ -11,8 +11,8 @@ docker build --tag=capstone .
 
 # Step 2: 
 # List docker images
-docker images list
-docker images ls
+# docker images list
+# docker images ls
 docker images
 
 # Step 3: 
