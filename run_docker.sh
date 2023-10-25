@@ -15,6 +15,8 @@ docker build --tag=capstone .
 # docker images ls
 docker images
 
+docker info
+
 # Step 3: 
 # Run flask app
 docker run -p 8080:80 capstone

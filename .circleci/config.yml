@@ -22,7 +22,7 @@ jobs:
 
   build-and-push-docker-image:
     docker:
-      - image: docker:latest
+      - image: cimg/base
     steps:
       - checkout
       - setup_remote_docker
