@@ -11,15 +11,15 @@ docker build --tag=capstone .
 
 # Step 2: 
 # List docker images
-# docker images list
-# docker images ls
+# docker image list
+# docker image ls
 docker images
 
 docker info
 
 # Step 3: 
 # Run flask app
-docker run -p 8080:80 capstone
+docker run -d -p 8080:80 capstone
 
 # Step 3: 
 # Stop the container
