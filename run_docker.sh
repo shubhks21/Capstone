@@ -12,6 +12,7 @@ docker build --tag=capstone .
 # Step 2: 
 # List docker images
 docker images list
+docker images
 
 # Step 3: 
 # Run flask app
